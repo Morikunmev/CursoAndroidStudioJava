@@ -1,0 +1,160 @@
+-----------MainActivity-----------
+
+package com.cursoandroid.n30creaciondialogoclaseindependiente;
+
+import android.os.Bundle;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.fragment.app.DialogFragment;
+
+public class MainActivity extends AppCompatActivity {
+    EditText et1;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_main);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+        et1 = findViewById(R.id.et1);
+    }
+    public void borrar(View v) {
+        DialogoMensaje dialogo = new DialogoMensaje("Desea borrar el nombre ingresaod?");
+        dialogo.show(getSupportFragmentManager(), "dialogo1");
+        dialogo.procesarRespuesta(new DialogoMensaje.Respuestas() {
+            @Override
+            public void confirmar(DialogFragment dialog) {
+                et1.setText("");
+            }
+            @Override
+            public void cancelar(DialogFragment dialog) {
+
+            }
+        });
+    }
+    public void salir (View v){
+        DialogoMensaje dialogo = new DialogoMensaje("Realmente quiere abandonar el programa?");
+        dialogo.show(getSupportFragmentManager(), "dialogo2");
+        dialogo.procesarRespuesta(new DialogoMensaje.Respuestas() {
+            @Override
+            public void confirmar(DialogFragment dialog) {
+                finish();
+            }
+            @Override
+            public void cancelar(DialogFragment dialog) {
+                Toast.makeText(MainActivity.this,"Gracias por seguir utilizando el proigrama", Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+}
+
+
+-----------DialogoMensaje-----------
+package com.cursoandroid.n30creaciondialogoclaseindependiente;
+
+import android.app.Dialog;
+import android.content.DialogInterface;
+import android.os.Bundle;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.DialogFragment;
+// Este código define una clase DialogoMensaje, que extiende DialogFragment para crear un cuadro de diálogo personalizado en una aplicación Android.
+//Un DialogFragment se usa cuando quieres mostrar una ventana emergente que contiene un diálogo (alertas, confirmaciones, etc.)
+public class DialogoMensaje extends DialogFragment {
+    //Este atributo almacena el mensaje que se mostrará dentro del cuadro de diálogo. Se le pasa como argumento cuando se crea una instancia del DialogoMensaje.
+    private String mensaje;
+    public DialogoMensaje(String mensaje) {
+        this.mensaje = mensaje;
+    }
+    @NonNull
+    @Override
+    public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setMessage(mensaje);
+        builder.setPositiveButton("Confirmar", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                respuesta.confirmar(DialogoMensaje.this);
+            }
+        });
+
+        builder.setNegativeButton("Cancelar", new DialogInterface.OnClickListener(){
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                respuesta.cancelar(DialogoMensaje.this);
+            }
+        });
+        return builder.create();
+    }
+    public interface Respuestas{
+        public void confirmar(DialogFragment dialog);
+        public void cancelar(DialogFragment dialog);
+    }
+    private Respuestas respuesta;
+    public void procesarRespuesta(Respuestas r){
+        respuesta = r;
+    }
+}
+
+
+
+
+
+-----------Activity_main.xml-----------
+
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <EditText
+        android:id="@+id/et1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="18dp"
+        android:layout_marginTop="22dp"
+        android:ems="10"
+        android:hint="Nombre"
+        android:inputType="text"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="19dp"
+        android:layout_marginTop="15dp"
+        android:onClick="borrar"
+        android:text="Borrar "
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/et1" />
+
+    <Button
+        android:id="@+id/button2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:onClick="salir"
+        android:text="Salir"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.653"
+        app:layout_constraintStart_toStartOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>
