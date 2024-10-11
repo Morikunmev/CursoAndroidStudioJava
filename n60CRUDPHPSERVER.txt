@@ -1,0 +1,296 @@
+--------------------------AndroidManiffest.xml--------------------------
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <application
+        android:usesCleartextTraffic="true"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.N58InsercionFilaMySQLphp"
+        tools:targetApi="31">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
+
+
+
+--------------------------MainActivity.java--------------------------
+
+package com.cursoandroid.n58insercionfilamysqlphp;
+
+import android.os.Bundle;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+public class MainActivity extends AppCompatActivity {
+    private EditText etCodigo, etDescripcion, etPrecio;
+    private RequestQueue rq;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_main);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+        etDescripcion = findViewById(R.id.etDescripcion);
+        etPrecio = findViewById(R.id.etPrecio);
+        etCodigo = findViewById(R.id.etCodigo);
+        rq = Volley.newRequestQueue(this);
+    }
+    public void insertar(View v){
+        String url = "http://scratchya.com.ar/videosandroidjava/volley/insertar.php";
+        JSONObject parametros = new JSONObject();
+        try {
+            parametros.put("descripcion",etDescripcion.getText().toString());
+            parametros.put("precio",etPrecio.getText().toString());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        JsonObjectRequest requerimiento = new JsonObjectRequest(Request.Method.POST, url, parametros,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            if (response.get("respuesta").toString().equals("ok")){
+                                Toast.makeText(MainActivity.this,"Fila insertada correctamente",Toast.LENGTH_SHORT).show();
+                                etDescripcion.setText("");
+                                etPrecio.setText("");
+                            }
+                            else {
+                                Toast.makeText(MainActivity.this,response.get("respuesta").toString(),Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast.makeText(MainActivity.this,"Problemas con el servidor",Toast.LENGTH_SHORT).show();
+            }
+        });
+        rq.add(requerimiento);
+    }
+    public void consultar(View v){
+        String url = "http://scratchya.com.ar/videosandroidjava/volley/consultar.php?codigo="+etCodigo.getText().toString();
+        JsonArrayRequest requerimiento = new JsonArrayRequest(Request.Method.GET, url, null, new Response.Listener<JSONArray>() {
+            @Override
+            public void onResponse(JSONArray response) {
+                if (response.length()==1){
+                    try {
+                        JSONObject objeto = new JSONObject(response.get(0).toString());
+                        etDescripcion.setText(objeto.getString("descripcion"));
+                        etPrecio.setText(objeto.getString("precio"));
+                    }catch (JSONException e){
+                        e.printStackTrace();
+                    }
+                }
+                else{
+                    Toast.makeText(MainActivity.this,"No hay resultados",Toast.LENGTH_SHORT).show();
+                    etDescripcion.setText("");
+                    etPrecio.setText("");
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast.makeText(MainActivity.this,error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+        rq.add(requerimiento);
+    }
+    public void borrar(View v){
+        String url = "http://scratchya.com.ar/videosandroidjava/volley/borrar.php";
+        JSONObject parametros = new JSONObject();
+        try {
+            parametros.put("codigo",etCodigo.getText().toString());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        JsonObjectRequest requerimiento = new JsonObjectRequest(Request.Method.POST, url, parametros,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            String result = response.get("resultado").toString();
+                            if (result.equals("1")){
+                                Toast.makeText(MainActivity.this,"Fila borrada correctamente",Toast.LENGTH_SHORT).show();
+                                etCodigo.setText("");
+                                etDescripcion.setText("");
+                                etPrecio.setText("");
+                            }else {
+                                Toast.makeText(MainActivity.this,"No existe el codigo de articulo ingrsado",Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(MainActivity.this,error.getMessage(),Toast.LENGTH_SHORT).show();}
+                    });
+        rq.add(requerimiento);}
+        public void modificar(View v){
+            String url = "http://scratchya.com.ar/videosandroidjava/volley/modificar.php";
+            JSONObject parametros = new JSONObject();
+            try {
+                parametros.put("codigo",etCodigo.getText().toString());
+                parametros.put("descripcion",etDescripcion.getText().toString());
+                parametros.put("precio",etPrecio.getText().toString());
+
+            }catch (JSONException e){
+                e.printStackTrace();
+            }
+            JsonObjectRequest requerimiento = new JsonObjectRequest(Request.Method.POST, url, parametros,
+                    new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            try {
+                                String result = response.get("resultado").toString();
+                                if (result.equals("1")) {
+                                    Toast.makeText(MainActivity.this, "Fila modificada correctamente", Toast.LENGTH_SHORT).show();
+                                    etDescripcion.setText("");
+                                    etPrecio.setText("");
+                                    etCodigo.setText("");
+                                } else {
+                                    Toast.makeText(MainActivity.this, "No existe el codigo de articulo ingrsado", Toast.LENGTH_SHORT).show();
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            Toast.makeText(MainActivity.this, error.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+            });
+            rq.add(requerimiento);}}
+
+
+
+
+--------------------------build.gradle.kts--------------------------
+
+plugins {
+    alias(libs.plugins.android.application)
+}
+
+android {
+    namespace = "com.cursoandroid.n58insercionfilamysqlphp"
+    compileSdk = 34
+
+    defaultConfig {
+        applicationId = "com.cursoandroid.n58insercionfilamysqlphp"
+        minSdk = 24
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0"
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation(libs.kotlin) // Dependencia de Kotlin
+    implementation(libs.volley) // Dependencia de Volley
+    implementation(libs.appcompat)
+    implementation(libs.material)
+    implementation(libs.activity)
+    implementation(libs.constraintlayout)
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.ext.junit)
+    androidTestImplementation(libs.espresso.core)
+}
+
+
+
+
+--------------------------libs.versions.toml--------------------------
+
+[versions]
+agp = "8.6.0"
+junit = "4.13.2"
+junitVersion = "1.2.1"
+espressoCore = "3.6.1"
+appcompat = "1.7.0"
+material = "1.12.0"
+activity = "1.9.2"
+constraintlayout = "2.1.4"
+volley = "1.2.1"
+kotlin = "1.8.10" # Aquí defines la versión de Kotlin
+
+
+
+[libraries]
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
+constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+volley = { group = "com.android.volley", name = "volley", version.ref = "volley" }
+kotlin = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version.ref = "kotlin" } # Agrega Kotlin aquí
+
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+
+
+
+
+
