@@ -1,0 +1,655 @@
+------------------db.php------------------
+<?php 
+
+$mysql = new mysqli(
+    "localhost", // Servidor
+    "root",      // Usuario
+    "",          // Contraseña
+    "android",   // Base de datos
+);
+
+if ($mysql->connect_error) {
+    die("Conexión fallida: " . $mysql->connect_error);
+}
+
+
+------------------delete.php------------------
+<?php 
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    require_once("db.php");
+    $id = $_POST['id'];
+    $query = "DELETE FROM users WHERE id='$id'";
+    $result = $mysql->query($query);
+    if ($result) { 
+        if ($mysql->affected_rows > 0) {
+            echo "User deleted successfully";
+        } else {
+            echo "not found";
+        }
+    } else {
+        echo "Error executing query: " . $mysql->error; // Manejo de error de consulta
+    }
+    $mysql->close();
+}
+
+
+
+
+
+
+
+
+------------------edit.php------------------
+<?php 
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    require_once("db.php");
+    $id = $_POST['id'];
+    $name = $_POST['name'];
+    $email = $_POST['email'];
+    $password = $_POST['password'];
+    $phone = $_POST['phone'];
+
+    $query = "UPDATE users SET name='$name', email='$email', password='$password', phone='$phone' WHERE id='$id'";
+    $result = $mysql->query($query);
+    if ($result) {
+        if ($mysql->affected_rows > 0) {
+            echo "User updated successfully";
+        } else {
+            echo "No data to update";
+        }
+    } else {
+        echo "User failed to update: " . $mysql->error;
+    }
+    $mysql->close();
+}
+
+------------------fetch.php------------------
+<?php 
+
+if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+    require_once("db.php");
+    $id = $_GET['id'];
+    $query = "SELECT * FROM users WHERE id = '$id'";
+    $result = $mysql->query($query);
+    
+    if ($mysql->affected_rows > 0) {
+        $row = $result->fetch_assoc();  
+        echo json_encode($row); // Devolver los datos del usuario en formato JSON
+    } else {
+        echo json_encode(array("error" => "User not found"));
+    }
+    
+    $result->close();
+    $mysql->close();
+}
+
+
+
+------------------save.php------------------
+<?php 
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    require_once("db.php");
+    $name = $_POST['name'];
+    $email = $_POST['email'];
+    $password = $_POST['password'];
+    $phone = $_POST['phone'];
+
+    // Preparar la consulta
+    $query = "INSERT INTO users (name, email, password, phone) VALUES ('$name', '$email', '$password', '$phone')";
+    
+    // Ejecutar la consulta
+    $result = $mysql->query($query);
+
+    // Verificar el resultado de la consulta
+    if ($result == true) {
+        echo "User added successfully";
+    } else {
+        echo "User failed: " . $mysql->error; // Proporcionar información sobre el error
+    }
+
+    // Cerrar la conexión a la base de datos
+    $mysql->close();
+}
+
+
+
+
+------------------ activity_main.xml------------------
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <EditText
+        android:id="@+id/etName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Name"
+        android:inputType="text"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="16dp" />
+
+    <EditText
+        android:id="@+id/etEmail"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Email"
+        android:inputType="textEmailAddress"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/etName"
+        android:layout_marginTop="16dp" />
+
+    <EditText
+        android:id="@+id/etPassword"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Password"
+        android:inputType="textPassword"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/etEmail"
+        android:layout_marginTop="16dp" />
+
+    <EditText
+        android:id="@+id/etPhone"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Phone"
+        android:inputType="phone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/etPassword"
+        android:layout_marginTop="16dp" />
+
+    <Button
+        android:id="@+id/btnCreate"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Create"
+        app:layout_constraintTop_toBottomOf="@id/etPhone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="16dp" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/btnCreate"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp">
+
+        <Button
+            android:id="@+id/btnFetch"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Fetch user" />
+
+        <EditText
+            android:id="@+id/etId"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Id"
+            android:inputType="number" />
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------------------Activity_main2.xml------------------
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity2">
+
+    <EditText
+        android:id="@+id/etName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Name"
+        android:inputType="text"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="16dp" />
+
+    <EditText
+        android:id="@+id/etEmail"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Email"
+        android:inputType="textEmailAddress"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/etName"
+        android:layout_marginTop="16dp" />
+
+    <EditText
+        android:id="@+id/etPassword"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Password"
+        android:inputType="textPassword"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/etEmail"
+        android:layout_marginTop="16dp" />
+
+    <EditText
+        android:id="@+id/etPhone"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Phone"
+        android:inputType="phone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/etPassword"
+        android:layout_marginTop="16dp" />
+
+    <Button
+        android:id="@+id/btnEdit"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Edit"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/etPhone"
+    />
+
+    <LinearLayout
+        android:id="@+id/linearLayout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnEdit">
+
+        <Button
+            android:id="@+id/btnDelete"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Delete user"
+
+            />
+
+        <EditText
+            android:id="@+id/etId"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Id"
+            android:inputType="number" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/atras"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Regresar"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout"
+        app:layout_constraintVertical_bias="0.035" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+
+
+
+
+
+
+
+
+---------------MainActivity.java---------------
+package com.cursoandroid.crudstudiomysql;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+    EditText etName, etPassword, etEmail, etPhone, etId;
+    Button btnCreate, btnFetch;
+    RequestQueue requestQueue;
+
+    private static final String URL1 = "http://192.168.1.85:8012/android/save.php";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_main);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, system-Bars.bottom);
+            return insets;
+        });
+        requestQueue = Volley.newRequestQueue(this);
+        //UI
+        initUI();
+        // Botones
+        btnCreate.setOnClickListener(this);
+        btnFetch.setOnClickListener(this);
+
+    }
+
+    private void initUI() {
+        // EditTexts
+        etName = findViewById(R.id.etName);
+        etPassword = findViewById(R.id.etPassword);
+        etEmail = findViewById(R.id.etEmail);
+        etPhone = findViewById(R.id.etPhone);
+        etId = findViewById(R.id.etId);
+
+        // Botones
+        btnCreate = findViewById(R.id.btnCreate);
+        btnFetch = findViewById(R.id.btnFetch);
+
+    }
+    @Override
+    public void onClick(View v) {
+        int id = v.getId();
+        if (id == R.id.btnCreate) {
+            String name = etName.getText().toString().trim();
+            String email = etEmail.getText().toString().trim();
+            String password = etPassword.getText().toString().trim();
+            String phone = etPhone.getText().toString().trim();
+
+            createUser(name, email, password, phone);
+        } else if (id == R.id.btnFetch) {
+            Intent intent = new Intent(this, MainActivity2.class);
+            intent.putExtra("id",etId.getText().toString().trim());
+            startActivity(intent);
+        }
+    }
+
+    private void createUser(final String name, final String email, final String password, final String phone) {
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, URL1,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {Toast.makeText(MainActivity.this, "Usuario creado con éxito", Toast.LENGTH_SHORT).show();}
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast.makeText(MainActivity.this, "Error en la conexión: " + er-ror.getMessage(), Toast.LENGTH_SHORT).show();}
+        })
+        {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> params = new HashMap<>();
+                params.put("name", name);
+                params.put("email", email);
+                params.put("password", password);
+                params.put("phone", phone);
+                return params;
+            }
+        };
+        requestQueue.add(stringRequest);
+    }
+}
+
+
+
+
+
+
+---------------MainActivity2.java---------------
+package com.cursoandroid.crudstudiomysql;
+
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class MainActivity2 extends AppCompatActivity implements View.OnClickListener {
+    Button btnDelete, btnEdit, btnRegresar;
+    EditText etName, etPassword, etEmail, etPhone, etId;
+    String id;
+    RequestQueue requestQueue;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_main2);
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, system-Bars.bottom);
+            return insets;
+        });
+
+        requestQueue = Volley.newRequestQueue(this);
+        Bundle extras = getIntent().getExtras();
+        if (extras != null) {
+            id = extras.getString("id");
+        }
+
+        // UI
+        initUI();
+        readUser();
+    }
+
+    private void initUI() {
+        // EditTexts
+        etName = findViewById(R.id.etName);
+        etPassword = findViewById(R.id.etPassword);
+        etEmail = findViewById(R.id.etEmail);
+        etPhone = findViewById(R.id.etPhone);
+        etId = findViewById(R.id.etId);
+
+        // Buttons
+        btnDelete = findViewById(R.id.btnDelete);
+        btnEdit = findViewById(R.id.btnEdit);
+        btnRegresar = findViewById(R.id.atras); // Inicializa el botón "Regresar"
+
+        // Set OnClickListener for buttons
+        btnDelete.setOnClickListener(this);
+        btnEdit.setOnClickListener(this);
+        btnRegresar.setOnClickListener(this); // Agrega el listener
+
+
+        Log.d("MainActivity2", "Activity creada"); // Logcat para depuración
+    }
+
+    private void readUser() {
+        String url = String.format("http://192.168.1.85:8012/android/fetch.php?id=%s", id);
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Log.d("MainActivity2", "Respuesta recibida"); // Logcat para depu-ración
+                        try {
+                            String name = response.getString("name");
+                            String email = response.getString("email");
+                            String password = response.getString("password");
+                            String phone = response.getString("phone");
+                            String id = response.getString("id");
+
+                            etName.setText(name);
+                            etEmail.setText(email);
+                            etPassword.setText(password);
+                            etPhone.setText(phone);
+                            etId.setText(id);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                            Toast.makeText(MainActivity2.this, "No se pudo encontrar el id en la base de datos", Toast.LENGTH_SHORT).show();
+                            finish();
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // Verifica si hay una respuesta de red y extrae el código de es-tado
+                        if (error.networkResponse != null) {
+                            int statusCode = error.networkResponse.statusCode;
+                            Log.e("MainActivity2", "Error de red. Código de estado: " + statusCode);
+                        } else {
+                            Log.e("MainActivity2", "Error en la conexión: " + er-ror.getMessage()); // Error genérico
+                        }
+                        Toast.makeText(MainActivity2.this, "Error en la conexión", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
+        requestQueue.add(jsonObjectRequest);
+    }
+
+    @Override
+    public void onClick(View v) {
+        int id = v.getId();
+        if (id == R.id.btnEdit) {
+            String name = etName.getText().toString().trim();
+            String email = etEmail.getText().toString().trim();
+            String password = etPassword.getText().toString().trim();
+            String phone = etPhone.getText().toString().trim();
+
+            updateUser(name, email, password, phone);
+
+        } else if (id == R.id.btnDelete) {
+            String idUser = etId.getText().toString().trim();
+            removeUser(idUser);
+
+        }else if(id ==R.id.atras){
+            finish();
+        }
+    }
+
+    private void updateUser(final String name, final String email, final String password, final String phone) {
+        String URL = "http://192.168.1.85:8012/android/edit.php";
+        StringRequest stringRequest = new StringRequest(
+                Request.Method.POST, URL, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Toast.makeText(MainActivity2.this, "Usuario actualizado con exito", Toast.LENGTH_SHORT).show();
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> params = new HashMap<>();
+                params.put("id", id);
+                params.put("name", name);
+                params.put("email", email);
+                params.put("password", password);
+                params.put("phone", phone);
+                return params;
+            }
+        }; // Corregido aquí
+        requestQueue.add(stringRequest); // Asegúrate de añadir la solicitud a la cola
+    }
+
+
+    private void removeUser(final String idUser) {
+        String URL = "http://192.168.1.85:8012/android/delete.php";
+        StringRequest stringRequest = new StringRequest(
+                Request.Method.POST, URL, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Toast.makeText(MainActivity2.this, "Usuario eliminado con exito", Toast.LENGTH_SHORT).show();
+                finish();
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast.makeText(MainActivity2.this, "Error al eliminar el usuario", Toast.LENGTH_SHORT).show();
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> params = new HashMap<>();
+                params.put("id", idUser);
+                return params;
+            }
+        };
+        requestQueue.add(stringRequest);
+    }
+}
+
+
+
